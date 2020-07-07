@@ -1,9 +1,9 @@
 fs = require 'fs'
 needle = require 'needle'
 open = require 'open'
-{print} = require 'util'
 path = require 'path'
-unzip = require 'unzip'
+process = require 'process'
+unzip = require 'unzipper'
 
 
 HOST = 'http://fontello.com'
@@ -39,11 +39,12 @@ fontello =
     #
     apiRequest options, (sessionUrl) ->
 
-      requestOptions = {}
+      requestOptions = { follow: 10 }
       requestOptions.proxy = options.proxy if options.proxy?
 
       zipFile = needle.get("#{sessionUrl}/get", requestOptions, (error, response, body) ->
         throw error if error
+        throw "Failed. Response Code [${response.statusCode}] from ${sessionUrl}/get" if (response.statusCode != 200)
       )
 
       # If css and font directories were provided, extract the contents of
@@ -70,14 +71,14 @@ fontello =
                   entry.autodrain()
           ))
           .on('finish', (->
-            print 'Install complete.\n'.green
+            console.log 'Install complete.\n'.green
           ))
 
       else
         zipFile
-          .pipe(unzip.Extract({ path: '.' }))
+          .pipe(unzip.Extract({ path: process.cwd() }))
           .on('finish', (->
-            print 'Install complete.\n'.green
+            console.log 'Install complete.\n'.green
           ))
 
 
